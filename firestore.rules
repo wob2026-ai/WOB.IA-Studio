@@ -1,0 +1,143 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Global safety net (Default-deny catch-all)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Core Helper Functions ---
+    function isSignedIn() {
+      return true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Role detection: checks if the current user profile exists and is an admin/superadmin
+    function isAdmin() {
+      return isSignedIn() && 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin" ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "superadmin"));
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Specific Validation Blueprints ---
+    function isValidUser(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.name is string && data.name.size() <= 200
+          && data.login is string && data.login.size() <= 50
+          && data.cpf is string && data.cpf.size() == 11
+          && data.email is string && data.email.size() <= 100
+          && data.uf is string && data.uf.size() == 2
+          && data.city is string && data.city.size() <= 100
+          && data.role is string && (data.role == 'tech' || data.role == 'commercial' || data.role == 'admin' || data.role == 'superadmin')
+          && data.createdAt is string && data.createdAt.size() <= 50
+          && (!data.keys().hasAll(['password']) || (data.password is string && data.password.size() <= 200));
+    }
+
+    function isValidAccessLog(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.userId is string && data.userId.size() <= 128
+          && data.userName is string && data.userName.size() <= 200
+          && data.timestamp is string && data.timestamp.size() <= 50
+          && data.uf is string && data.uf.size() == 2
+          && data.city is string && data.city.size() <= 100;
+    }
+
+    function isValidEvaluation(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.userId is string && data.userId.size() <= 128
+          && data.userName is string && data.userName.size() <= 200
+          && data.timestamp is string && data.timestamp.size() <= 50
+          && data.score is number && data.score >= 0 && data.score <= 100
+          && data.strengths is string && data.strengths.size() <= 10000
+          && data.weaknesses is string && data.weaknesses.size() <= 10000
+          && data.suggestions is string && data.suggestions.size() <= 10000
+          && (!data.keys().hasAll(['videoUrl']) || (data.videoUrl is string && data.videoUrl.size() <= 1000))
+          && data.transcript is string && data.transcript.size() <= 50000
+          && data.uf is string && data.uf.size() == 2
+          && data.city is string && data.city.size() <= 100
+          && data.evalMode is string && (data.evalMode == 'knowledge' || data.evalMode == 'script')
+          && data.correlationId is string && data.correlationId.size() <= 128;
+    }
+
+    function isValidAttempt(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.userId is string && data.userId.size() <= 128
+          && data.timestamp is string && data.timestamp.size() <= 50
+          && data.status is string && (data.status == 'completed' || data.status == 'abandoned');
+    }
+
+    // --- Collection Matching Rules ---
+    
+    // 1. Users collection
+    match /users/{userId} {
+      allow read, list: if isSignedIn();
+      
+      allow create: if isSignedIn() && isValidUser(incoming()) &&
+        (incoming().id == userId) &&
+        (incoming().keys().hasAll(['id', 'name', 'login', 'cpf', 'email', 'uf', 'city', 'role', 'createdAt'])) &&
+        (incoming().keys().size() <= 10);
+
+      allow update: if isSignedIn() && isValidUser(incoming()) &&
+        (incoming().id == userId) &&
+        (incoming().createdAt == existing().createdAt) && // Immunize createdAt
+        (incoming().cpf == existing().cpf); // Immunize CPF
+
+      allow delete: if isSignedIn();
+    }
+
+    // 2. Access logs collection
+    match /accesses/{logId} {
+      allow read, list: if isSignedIn();
+      
+      allow create: if isSignedIn() && isValidAccessLog(incoming()) &&
+        (incoming().keys().hasAll(['id', 'userId', 'userName', 'timestamp', 'uf', 'city'])) &&
+        (incoming().keys().size() == 6);
+        
+      allow update, delete: if false; // Access logs are fully immutable
+    }
+
+    // 3. Evaluations collection
+    match /evaluations/{evalId} {
+      allow read, list: if isSignedIn();
+      
+      allow create: if isSignedIn() && isValidEvaluation(incoming()) &&
+        (incoming().keys().hasAll(['id', 'userId', 'userName', 'timestamp', 'score', 'strengths', 'weaknesses', 'suggestions', 'transcript', 'uf', 'city', 'evalMode', 'correlationId'])) &&
+        (incoming().keys().size() <= 14);
+
+      allow update: if false; // Evaluations are immutable
+      
+      allow delete: if isSignedIn();
+    }
+
+    // 4. Attempts collection
+    match /attempts/{attemptId} {
+      allow read, list: if isSignedIn();
+      
+      allow create: if isSignedIn() && isValidAttempt(incoming()) &&
+        (incoming().keys().hasAll(['id', 'userId', 'timestamp', 'status'])) &&
+        (incoming().keys().size() == 4);
+
+      allow update: if isSignedIn() && isValidAttempt(incoming()) &&
+        (incoming().id == existing().id);
+
+      allow delete: if isSignedIn();
+    }
+  }
+}

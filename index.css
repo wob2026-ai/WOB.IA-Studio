@@ -1,0 +1,82 @@
+/* Explica+ Mobile & Responsive Engine (iOS & Android) */
+
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+
+/* Fluid responsive height supporting mobile address bar dynamics */
+html {
+  min-height: 100%;
+  min-height: -webkit-fill-available;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  padding-left: var(--sal);
+  padding-right: var(--sar);
+}
+
+/* Safe area utilities */
+.pt-safe {
+  padding-top: max(1rem, var(--sat));
+}
+
+.pb-safe {
+  padding-bottom: max(1rem, var(--sab));
+}
+
+.bottom-safe {
+  bottom: var(--sab);
+}
+
+.top-safe {
+  top: var(--sat);
+}
+
+/* Prevent iOS Safari from zooming automatically when focusing inputs */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Smooth momentum scrolling on iOS */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbars for clean mobile segmented controls and horizontal carousels */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Touch feedback helper */
+.touch-press {
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+}
+.touch-press:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}

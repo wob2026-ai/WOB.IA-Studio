@@ -1,0 +1,11 @@
+{
+  "name": "Explica+ basico v1.0",
+  "description": "O Explica+ é a solução pioneira de capacitação prática baseada em IA e Simulação Multimodal, desenvolvida sob medida para a jornada de crescimento dos técnicos de campo e consultores da Claro.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

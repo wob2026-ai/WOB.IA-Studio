@@ -1,0 +1,88 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User registration for technicians and administrators",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user ID matching document ID" },
+        "name": { "type": "string", "description": "Full name of the user" },
+        "login": { "type": "string", "description": "System username login" },
+        "cpf": { "type": "string", "description": "User tax identification number CPF (11 characters)" },
+        "email": { "type": "string", "description": "Corporate or personal email" },
+        "uf": { "type": "string", "description": "Federative Unit state abbreviation (e.g. SP)" },
+        "city": { "type": "string", "description": "City of residence or work" },
+        "role": { "type": "string", "enum": ["tech", "commercial", "admin", "superadmin"], "description": "Access control role" },
+        "password": { "type": "string", "description": "Hashed password or credentials for login" },
+        "createdAt": { "type": "string", "description": "ISO timestamp for user creation" }
+      },
+      "required": ["id", "name", "login", "cpf", "email", "uf", "city", "role", "createdAt"]
+    },
+    "AccessLog": {
+      "title": "AccessLog",
+      "description": "Log records for accesses",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique log identifier" },
+        "userId": { "type": "string", "description": "ID of the user who logged in" },
+        "userName": { "type": "string", "description": "Full name of the user at access time" },
+        "timestamp": { "type": "string", "description": "ISO timestamp of access" },
+        "uf": { "type": "string", "description": "Federative Unit state check at access" },
+        "city": { "type": "string", "description": "City of user at access" }
+      },
+      "required": ["id", "userId", "userName", "timestamp", "uf", "city"]
+    },
+    "Evaluation": {
+      "title": "Evaluation",
+      "description": "Simulation cognitive and performance review evaluation reports",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique evaluation ID" },
+        "userId": { "type": "string", "description": "UID of evaluated technician" },
+        "userName": { "type": "string", "description": "Full name of the evaluated technician" },
+        "timestamp": { "type": "string", "description": "ISO timestamp of evaluation creation" },
+        "score": { "type": "number", "description": "Numeric evaluation score" },
+        "strengths": { "type": "string", "description": "Identified strong performance areas" },
+        "weaknesses": { "type": "string", "description": "Identified performance gaps" },
+        "suggestions": { "type": "string", "description": "Dynamic actionable suggestions" },
+        "videoUrl": { "type": "string", "description": "Optional video recording path or Google Drive link" },
+        "transcript": { "type": "string", "description": "Full transcribed transcription of audio text" },
+        "uf": { "type": "string", "description": "Federative Unit state check" },
+        "city": { "type": "string", "description": "City of technician" },
+        "evalMode": { "type": "string", "enum": ["knowledge", "script"], "description": "Evaluation modality mode" },
+        "correlationId": { "type": "string", "description": "Identifier linking sequence sessions" }
+      },
+      "required": ["id", "userId", "userName", "timestamp", "score", "strengths", "weaknesses", "suggestions", "transcript", "uf", "city", "evalMode", "correlationId"]
+    },
+    "Attempt": {
+      "title": "Attempt",
+      "description": "Training and simulation attempts logging state",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique attempt ID" },
+        "userId": { "type": "string", "description": "UID of of user" },
+        "timestamp": { "type": "string", "description": "ISO timestamp" },
+        "status": { "type": "string", "enum": ["completed", "abandoned"], "description": "Closing status of the attempt" }
+      },
+      "required": ["id", "userId", "timestamp", "status"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Users collection keyed by user ID"
+    },
+    "accesses/{logId}": {
+      "schema": "AccessLog",
+      "description": "Users tracking access log entries"
+    },
+    "evaluations/{evalId}": {
+      "schema": "Evaluation",
+      "description": "Evaluations results structured collection"
+    },
+    "attempts/{attemptId}": {
+      "schema": "Attempt",
+      "description": "User simulation active or abandoned session metrics"
+    }
+  }
+}
