@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { DB } from '../db';
 import { User, AccessLog, Evaluation, UserRole } from '../types';
 import { MediaStorage } from '../services/storageService';
+import { ReportService } from '../services/reportService';
 import { validateCPF, cleanCPF, formatCPF } from '../utils/validators';
 import { ScenarioManager } from '../components/ScenarioManager';
 import { QuizManager } from '../components/QuizManager';
@@ -315,21 +316,35 @@ export const AdminDashboard: React.FC<{ currentUser: User }> = ({ currentUser })
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 min-h-[400px]">
         {activeTab === 'evaluations' && (
           <div className="flex flex-col h-full">
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-               <h3 className="text-xs font-black uppercase text-gray-500 tracking-widest">Relatórios de Performance</h3>
-               <div className="flex items-center gap-3">
+            <div className="p-4 border-b border-gray-100 flex flex-wrap justify-between items-center gap-3 bg-gray-50">
+               <div>
+                 <h3 className="text-xs font-black uppercase text-gray-500 tracking-widest">Relatórios de Performance & Transcrições</h3>
+                 <p className="text-[11px] text-gray-400 mt-0.5">Sincronizado em tempo real com o banco Supabase</p>
+               </div>
+               <div className="flex flex-wrap items-center gap-2">
                  <button 
-                   onClick={handleExportEvaluationsCSV}
-                   className="text-gray-600 hover:text-black text-[10px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors"
+                   onClick={() => ReportService.exportToExcel(evaluations)}
+                   className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                   title="Exportar planilha completa em Excel com notas e transcrições"
                  >
-                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                    </svg>
-                   Exportar CSV
+                   Excel (.xlsx)
+                 </button>
+                 <button 
+                   onClick={() => ReportService.exportToPDF(evaluations)}
+                   className="px-3 py-1.5 claro-red hover:bg-red-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                   title="Gerar relatório analítico e pedagógico em PDF"
+                 >
+                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                   </svg>
+                   PDF
                  </button>
                  <button 
                    onClick={handleClearAllEvaluations}
-                   className="text-red-500 hover:text-red-700 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors"
+                   className="px-3 py-1.5 text-red-500 hover:bg-red-50 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors cursor-pointer border border-transparent hover:border-red-200"
                  >
                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                    Limpar Tudo
@@ -661,9 +676,56 @@ export const AdminDashboard: React.FC<{ currentUser: User }> = ({ currentUser })
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-black rounded-2xl aspect-video overflow-hidden">
-                  {videoUrl && <video src={videoUrl} controls className="w-full h-full object-contain" />}
+                <div className="space-y-4">
+                  {videoUrl ? (
+                    <div className="bg-black rounded-2xl aspect-video overflow-hidden">
+                      <video src={videoUrl} controls className="w-full h-full object-contain" />
+                    </div>
+                  ) : (
+                    <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white flex flex-col justify-between border border-gray-700 min-h-[220px]">
+                      <div>
+                        <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2">
+                          <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                          Armazenamento Otimizado & LGPD
+                        </div>
+                        <h4 className="text-base font-black text-white">Vídeo Descartado após Análise</h4>
+                        <p className="text-xs text-gray-300 mt-2 leading-relaxed">
+                          Conforme a política de privacidade e eficiência de infraestrutura, a mídia bruta de vídeo foi descartada. A nota da IA, feedbacks detalhados e a transcrição integral da fala estão permanentemente arquivados no Supabase.
+                        </p>
+                      </div>
+                      <div className="pt-3 border-t border-gray-700/60 flex items-center justify-between text-[11px] text-gray-400">
+                        <span>Colaborador: <strong className="text-white">{selectedEval.userName}</strong></span>
+                        <span>{selectedEval.city} - {selectedEval.uf}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedEval.transcript && (
+                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 text-left space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
+                          </svg>
+                          Transcrição Integral da Fala
+                        </span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedEval.transcript);
+                            alert("Transcrição copiada para a área de transferência!");
+                          }}
+                          className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-wider cursor-pointer"
+                        >
+                          Copiar Texto
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-800 italic font-mono leading-relaxed bg-white p-3 rounded-xl border border-gray-100 max-h-48 overflow-y-auto">
+                        "{selectedEval.transcript}"
+                      </p>
+                    </div>
+                  )}
                 </div>
+
                 <div className="space-y-4">
                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex justify-between items-center">
                      <span className="text-xs font-bold text-gray-400 uppercase">Performance ({selectedEval.evalMode})</span>
@@ -674,12 +736,6 @@ export const AdminDashboard: React.FC<{ currentUser: User }> = ({ currentUser })
                    {selectedEval.score === 0 && (
                      <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-left text-xs text-red-700 font-bold">
                        ⚠️ Nota 0.0: O técnico não explicou o produto para o cliente ou a fala foi desconexa / silêncio.
-                     </div>
-                   )}
-                   {selectedEval.transcript && (
-                     <div className="bg-gray-50 p-3.5 rounded-2xl border border-gray-200 text-left space-y-1">
-                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">Transcrição do Áudio</span>
-                       <p className="text-xs text-gray-700 italic font-mono leading-relaxed">"{selectedEval.transcript}"</p>
                      </div>
                    )}
                    <ExpandableSection title="Pontos Fortes" content={selectedEval.strengths} colorClass="border-green-500" textColor="text-green-700" />

@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 // URL e Chave Pública (Anon Key) seguras para o frontend do Supabase
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://efvqdtrnhphjbchtywuj.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmdnFkdHJuaHBoamJjaHR5d3VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNjk2NDcsImV4cCI6MjEwNTc0NTY0N30.4BTZTuXKammgxlC-AK5ApoH_8_orLOoswbjjIeh_2ZA';
+const env = (import.meta as any).env || {};
+const supabaseUrl = env.VITE_SUPABASE_URL || 'https://efvqdtrnhphjbchtywuj.supabase.co';
+const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmdnFkdHJuaHBoamJjaHR5d3VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNjk2NDcsImV4cCI6MjEwNTc0NTY0N30.4BTZTuXKammgxlC-AK5ApoH_8_orLOoswbjjIeh_2ZA';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

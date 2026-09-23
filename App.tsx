@@ -83,7 +83,6 @@ const App: React.FC = () => {
     setLoading(true);
     try {
       const evalId = Math.random().toString(36).substr(2, 9);
-      await MediaStorage.save(evalId, video);
       
       const reader = new FileReader();
       const base64Promise = new Promise<string>((resolve) => {
@@ -111,14 +110,29 @@ const App: React.FC = () => {
         alert(`Atenção: ${result.weaknesses}\n\nDica: ${result.suggestions}`);
       }
       
+      // Salvar apenas os dados cadastrais, feedbacks pedagógicos e transcrição no banco de dados (vídeo descartado)
       if (user) {
-        DB.evaluations.add({
-          id: evalId, userId: user.id, userName: user.name, timestamp: new Date().toISOString(),
-          score: result.score, strengths: result.strengths, weaknesses: result.weaknesses,
-          suggestions: result.suggestions, transcript: result.transcript,
-          uf: user.uf, city: user.city, evalMode: modeToUse, correlationId: correlationId
+        await DB.evaluations.add({
+          id: evalId, 
+          userId: user.id, 
+          userName: user.name, 
+          timestamp: new Date().toISOString(),
+          score: result.score, 
+          strengths: result.strengths, 
+          weaknesses: result.weaknesses,
+          suggestions: result.suggestions, 
+          transcript: result.transcript,
+          uf: user.uf, 
+          city: user.city, 
+          evalMode: modeToUse, 
+          correlationId: correlationId
         });
       }
+
+      // Garantir descarte de qualquer resíduo temporário de vídeo
+      try {
+        await MediaStorage.delete(evalId);
+      } catch {}
 
       setLastEval({ ...result, id: evalId });
       setCurrentPage('result');
